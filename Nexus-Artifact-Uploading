@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    environment {
+        NEXUS_VERSION        = "nexus3"
+        NEXUS_PROTOCOL       = "http"
+        NEXUS_URL            = "13.48.85.10:8081"
+        NEXUS_REPOSITORY     = "artifact-upload"
+        NEXUS_CREDENTIAL_ID  = "nexuslogin"
+        ARTVERSION           = "${env.BUILD_ID}"
+    }
+
+    stages {
+        stage('clone-package') {
+            steps {
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/prudhvisurya996/vprofile-project.git']])
+                sh 'mvn package'
+            }
+        }
+
+        stage('Upload Artifact to Nexus') {
+            steps {
+                nexusArtifactUploader(
+                    nexusVersion: "${env.NEXUS_VERSION}",
+                    protocol: "${env.NEXUS_PROTOCOL}",
+                    nexusUrl: "${env.NEXUS_URL}",
+                    version: "${env.ARTVERSION}",
+                    groupId: "com.mycompany.vprofile",
+                    repository: "${env.NEXUS_REPOSITORY}",
+                    credentialsId: "${env.NEXUS_CREDENTIAL_ID}",
+                    artifacts: [
+                        [
+                            artifactId: "vprofile",
+                            classifier: "",
+                            file: "target/vprofile-v2.war",
+                            type: "war"
+                        ]
+                    ]
+                )
+            }
+        }
+    }
+}
