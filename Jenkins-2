@@ -1,0 +1,36 @@
+pipeline{
+    agent any
+    stages{
+        stage ('clean Workspace'){
+            steps{
+                cleanWs()
+            }
+        }
+        stage ('checkout scm') {
+            steps {
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/prudhvisurya996/vprofile-project.git']])
+            }
+        }
+        stage ('maven compile') {
+            steps {
+                sh 'mvn clean compile'
+            }
+        }
+        stage ('Package') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+stage ('Build and push to docker hub'){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'Docker', toolName: 'docker') {
+                        sh "docker build -t vprofile ."
+                        sh "docker tag vprofile surya9961/vprofile:latest"
+                        sh "docker push surya9961/vprofile:latest"
+                   }
+                }
+            }
+        }
+    }
+}
